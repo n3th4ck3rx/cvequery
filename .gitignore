@@ -1,0 +1,65 @@
+# Python bytecode files
+__pycache__/
+*.py[cod]
+
+# Distribution / packaging
+.Python
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+*.egg-info/
+*.dist-info/
+build/
+dist/
+eggs/
+*.egg
+
+# Virtual environment
+.venv/
+
+# IDEs and editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Jupyter Notebooks
+.ipynb_checkpoints
+
+# Pytest
+.cache/
+nosetests.xml
+coverage.xml
+*.cover
+*.hypothesis/
+.pytest_cache/
+
+# mypy
+.mypy_cache/
+
+# Flask and Django
+instance/
+*.log
+*.pot
+
+# VS Code settings
+.vscode/
+
+# PyCharm settings
+.idea/
+
+# Sphinx documentation
+docs/_build/
+
+# Other files you may want to ignore
+*.db
+*.sqlite3
+
+# macOS specific files
+.DS_Store
+
+# Windows specific files
+Thumbs.db
