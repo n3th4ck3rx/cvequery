@@ -4,6 +4,8 @@ from datetime import datetime
 import hashlib
 from colorama import Fore, Style
 from typing import Dict, Optional, List, Any
+from constants import SEVERITY_MAP
+import click
 
 FIELD_COLOR_MAPPING = {
     "cvss": Fore.RED,
@@ -14,14 +16,6 @@ FIELD_COLOR_MAPPING = {
     "summary": Fore.MAGENTA,
     "cpes": Fore.CYAN,
 }
-
-SEVERITY_MAP = {
-    "critical": (9.0, 10.0),
-    "high": (7.0, 8.9),
-    "medium": (4.0, 6.9),
-    "low": (0.1, 3.9)
-}
-
 
 def save_to_json(data, filename):
     """Save data to a JSON file."""

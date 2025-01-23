@@ -1,11 +1,11 @@
 import click
 from typing import Optional
-from cve_query.api import get_cve_data, get_cves_data, get_cpe_data
-from cve_query.utils import (
+from api import get_cve_data, get_cves_data, get_cpe_data
+from utils import (
     filter_by_severity, save_to_json, colorize_output, 
     validate_date, sort_by_epss_score
 )
-from cve_query.__version__ import __version__  # Import version
+from __version__ import __version__
 import subprocess
 import sys
 
