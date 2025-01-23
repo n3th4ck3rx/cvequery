@@ -2,7 +2,7 @@ from typing import Optional, Dict, Any, Union
 import requests
 import json
 import time
-from cve_query.constants import (
+from constants import (
     BASE_URL,
     DEFAULT_TIMEOUT,
     DEFAULT_LIMIT,
@@ -11,7 +11,7 @@ from cve_query.constants import (
     HTTP_NOT_FOUND,
     HTTP_TOO_MANY_REQUESTS
 )
-from cve_query.utils import create_cache_key
+from utils import create_cache_key
 
 class RateLimiter:
     def __init__(self, calls_per_second=2):
