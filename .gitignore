@@ -63,3 +63,6 @@ docs/_build/
 
 # Windows specific files
 Thumbs.db
+
+# Test folder
+tests/

@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=40.8.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cvequery"
+dynamic = ["version"]
+description = "Query CVE details using Shodan's public CVE database API."
+authors = [
+    {name = "Neo", email = "neo.nzso@proton.me"},
+]
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "MIT"}
+dependencies = [
+    "requests>=2.20.0",
+    "click>=6.0",
+    "colorama>=0.3.0",
+    "urllib3>=1.20",
+    "certifi",
+    "typing-extensions>=3.7.4",
+]
+
+[project.scripts]
+cvequery = "cve_query.main:main"
+
+[tool.setuptools.dynamic]
+version = {attr = "cve_query.__version__.__version__"} 
