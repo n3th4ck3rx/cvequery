@@ -11,7 +11,7 @@ install:
 	pip install -e ".[dev]"
 
 test: install
-	pytest tests/ --cov=cve_query --cov-report=term-missing
+	pytest tests/ --cov=src --cov-report=term-missing
 
 lint:
 	black .

@@ -21,8 +21,12 @@ dependencies = [
     "typing-extensions>=3.7.4",
 ]
 
+[tool.setuptools]
+package-dir = {"" = "."}
+packages = ["src"]
+
 [project.scripts]
-cvequery = "cve_query.main:main"
+cvequery = "src.main:main"
 
 [tool.setuptools.dynamic]
-version = {attr = "cve_query.__version__.__version__"} 
+version = {attr = "src.__version__.__version__"} 
