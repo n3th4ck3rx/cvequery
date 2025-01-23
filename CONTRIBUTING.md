@@ -15,4 +15,3 @@ Please note that while I might not be able to immediately respond, I do my best 
 
 Thank you again for your understanding and support! I hope you find **CVE-Query** useful, and I encourage you to continue exploring and using the tool.
 ---
-
