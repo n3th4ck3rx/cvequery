@@ -22,8 +22,8 @@ dependencies = [
 ]
 
 [tool.setuptools]
-package-dir = {"" = "."}
 packages = ["src"]
+package-dir = {"src" = "src"}
 
 [project.scripts]
 cvequery = "src.main:main"

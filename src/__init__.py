@@ -1,4 +1,6 @@
 """CVE Query Tool Package."""
-from .__version__ import __version__
+from src.__version__ import __version__
+from src.cli import cli
+from src.main import main
 
-__all__ = ['__version__'] 
+__all__ = ['__version__', 'cli', 'main'] 

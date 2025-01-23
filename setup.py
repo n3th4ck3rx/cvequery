@@ -45,8 +45,8 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/n3th4ck3rx/cvequery",
-    packages=find_packages(where='.'),
-    package_dir={'': '.'},
+    packages=["src"],
+    package_dir={"src": "src"},
     install_requires=INSTALL_REQUIRES,
     extras_require={
         'dev': DEV_REQUIRES,

@@ -4,7 +4,7 @@ from datetime import datetime
 import hashlib
 from colorama import Fore, Style
 from typing import Dict, Optional, List, Any
-from constants import SEVERITY_MAP
+from src.constants import SEVERITY_MAP
 import click
 
 FIELD_COLOR_MAPPING = {

@@ -14,6 +14,5 @@ That being said, **feedback and suggestions** are always welcome! If you have id
 Please note that while I might not be able to immediately respond, I do my best to review messages when I can and will consider feedback for future updates to the tool.
 
 Thank you again for your understanding and support! I hope you find **CVE-Query** useful, and I encourage you to continue exploring and using the tool.
-
 ---
 
