@@ -2,19 +2,39 @@ import json
 import re
 from datetime import datetime
 import hashlib
-from colorama import Fore, Style
+from colorama import Fore, Style, init as colorama_init
 from typing import Dict, Optional, List, Any
 from src.constants import SEVERITY_MAP
 import click
 
+# Initialize colorama
+colorama_init(autoreset=True)
+
 FIELD_COLOR_MAPPING = {
-    "cvss": Fore.RED,
-    "cvss_v3": Fore.RED,
-    "epss": Fore.YELLOW,
-    "references": Fore.BLUE,
-    "published_time": Fore.GREEN,
+    "id": Fore.WHITE + Style.BRIGHT,
     "summary": Fore.MAGENTA,
+    "cvss": Fore.RED,
+    "cvss_v2": Fore.RED,
+    "cvss_v3": Fore.RED + Style.BRIGHT,
+    "epss": Fore.YELLOW,
+    "epss_score": Fore.YELLOW + Style.BRIGHT,
+    "kev": Fore.RED + Style.BRIGHT,
+    "references": Fore.BLUE,
+    "published": Fore.GREEN,
+    "modified": Fore.GREEN,
     "cpes": Fore.CYAN,
+    "cwe": Fore.YELLOW,
+    "vectorString": Fore.LIGHTRED_EX,
+    "attackVector": Fore.LIGHTRED_EX,
+    "complexity": Fore.LIGHTYELLOW_EX,
+    "privilegesRequired": Fore.LIGHTYELLOW_EX,
+    "userInteraction": Fore.LIGHTYELLOW_EX,
+    "scope": Fore.LIGHTWHITE_EX,
+    "confidentialityImpact": Fore.LIGHTRED_EX,
+    "integrityImpact": Fore.LIGHTRED_EX,
+    "availabilityImpact": Fore.LIGHTRED_EX,
+    "baseScore": Fore.RED + Style.BRIGHT,
+    "baseSeverity": Fore.RED + Style.BRIGHT,
 }
 
 def save_to_json(data, filename):
@@ -50,7 +70,6 @@ def filter_by_severity(data: Dict[str, Any], severity_levels: List[str]) -> Dict
     if not severity_levels or not data or "cves" not in data:
         return data
 
-    # Define severity ranges like in the original implementation
     severity_ranges = {
         "critical": (9.0, 10.0),
         "high": (7.0, 8.9),
@@ -58,35 +77,45 @@ def filter_by_severity(data: Dict[str, Any], severity_levels: List[str]) -> Dict
         "low": (0.1, 3.9),
         "none": (0.0, 0.0)
     }
-
-    # Normalize severity levels
-    severity_levels = [s.lower().strip() for s in severity_levels]
+    
+    normalized_severity_levels = [s.lower().strip() for s in severity_levels]
     
     filtered_cves = []
     for cve in data["cves"]:
-        # Try CVSS v3 first, then fall back to v2
-        cvss_score = cve.get("cvss_v3")
-        if cvss_score is None:
-            cvss_score = cve.get("cvss")
-        
-        if cvss_score is not None:
+        cvss_score_to_check = None
+        if "cvss_v3" in cve and isinstance(cve["cvss_v3"], dict) and "baseScore" in cve["cvss_v3"]:
+            cvss_score_to_check = cve["cvss_v3"]["baseScore"]
+        elif "cvss" in cve and isinstance(cve["cvss"], dict) and "score" in cve["cvss"]:
+            cvss_score_to_check = cve["cvss"]["score"]
+        elif "cvss_v3" in cve and isinstance(cve["cvss_v3"], (float, int)):
+             cvss_score_to_check = cve["cvss_v3"]
+        elif "cvss" in cve and isinstance(cve["cvss"], (float, int)):
+             cvss_score_to_check = cve["cvss"]
+
+        if cvss_score_to_check is not None:
             try:
-                score = float(cvss_score)
-                # Check if score falls within any of the requested severity ranges
-                for level in severity_levels:
+                score = float(cvss_score_to_check)
+                for level in normalized_severity_levels:
                     if level in severity_ranges:
                         min_score, max_score = severity_ranges[level]
                         if min_score <= score <= max_score:
                             filtered_cves.append(cve)
-                            break
+                            break 
             except (ValueError, TypeError):
-                continue
+                continue 
 
-    # Sort by CVSS score in descending order
-    filtered_cves.sort(
-        key=lambda x: float(x.get("cvss_v3", x.get("cvss", 0)) or 0),
-        reverse=True
-    )
+    def get_sort_score(cve_item):
+        if "cvss_v3" in cve_item and isinstance(cve_item["cvss_v3"], dict) and "baseScore" in cve_item["cvss_v3"]:
+            return float(cve_item["cvss_v3"]["baseScore"] or 0)
+        if "cvss" in cve_item and isinstance(cve_item["cvss"], dict) and "score" in cve_item["cvss"]:
+            return float(cve_item["cvss"]["score"] or 0)
+        if "cvss_v3" in cve_item and isinstance(cve_item["cvss_v3"], (float, int)):
+             return float(cve_item["cvss_v3"] or 0)
+        if "cvss" in cve_item and isinstance(cve_item["cvss"], (float, int)):
+             return float(cve_item["cvss"] or 0)
+        return 0.0
+
+    filtered_cves.sort(key=get_sort_score, reverse=True)
 
     return {
         "cves": filtered_cves,
@@ -94,12 +123,39 @@ def filter_by_severity(data: Dict[str, Any], severity_levels: List[str]) -> Dict
     }
 
 
-def colorize_output(data, fields):
+def colorize_output(data: Dict[str, Any], fields_to_display: List[str]):
     """Display data with colorized fields."""
-    for field in fields:
-        if field in data:
-            color = FIELD_COLOR_MAPPING.get(field, Fore.WHITE)
-            print(f"{color}{field}: {Style.BRIGHT}{data[field]}")
+    for field_name in fields_to_display:
+        if field_name in data:
+            field_value = data[field_name]
+            
+            field_name_style = Fore.WHITE + Style.BRIGHT
+            field_value_style = Style.BRIGHT
+
+            if field_name in FIELD_COLOR_MAPPING:
+                field_name_style = FIELD_COLOR_MAPPING[field_name]
+            
+            value_str = ""
+            if isinstance(field_value, dict):
+                value_str = json.dumps(field_value, indent=2)
+                complex_obj_color = FIELD_COLOR_MAPPING.get(field_name, Fore.WHITE).split(Style.BRIGHT)[0] if isinstance(FIELD_COLOR_MAPPING.get(field_name), str) else Fore.WHITE
+                
+                lines = value_str.split('\\n')
+                colored_lines = []
+                for line in lines:
+                    if ":" in line:
+                        key, val = line.split(":", 1)
+                        colored_lines.append(f"{Fore.LIGHTWHITE_EX}{key}:{Style.RESET_ALL}{field_value_style}{val}")
+                    else:
+                        colored_lines.append(f"{complex_obj_color}{line}")
+                value_str = "\\n".join(colored_lines)
+
+            elif isinstance(field_value, list):
+                value_str = json.dumps(field_value, indent=2)
+            else:
+                value_str = str(field_value)
+
+            print(f"{field_name_style}{field_name}:{Style.RESET_ALL} {field_value_style}{value_str}{Style.RESET_ALL}")
 
 
 def sort_by_epss_score(data: dict) -> dict:

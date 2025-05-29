@@ -2,7 +2,7 @@
 
 [![Python Version](https://img.shields.io/badge/python-3.8%2B-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-1.0.2-orange.svg)](https://test.pypi.org/project/cvequery/)
+[![Version](https://img.shields.io/badge/version-1.0.3-orange.svg)](https://test.pypi.org/project/cvequery/)
 
 A powerful command-line tool to search and analyze CVE (Common Vulnerabilities and Exposures) data using Shodan's public CVE database API.
 
@@ -12,8 +12,14 @@ A powerful command-line tool to search and analyze CVE (Common Vulnerabilities a
 - 📊 Filter results by severity, date range, and KEV status
 - 📈 Sort results by EPSS score
 - 📥 Export results to JSON format
-- 🖌️ Colorized output for better readability
+- 🖌️ **Enhanced Colorized Output**: Improved color-coding for better readability in the terminal.
 - ⏳ Auto-update functionality
+- 🚀 **Robust API Interaction**:
+    - **Rate Limiting**: Respects API limits (1-2 requests/second) to prevent abuse.
+    - **Caching**: API responses are cached for 24 hours in a local `cache/` directory to speed up repeated queries and reduce API calls. (The `cache/` directory is added to `.gitignore`).
+    - **Retries**: Implements a retry mechanism (3 retries with exponential backoff) for API calls on transient errors (e.g., 429, 5xx status codes).
+- 📄 **Improved Readability**: The `cpes` field is now hidden by default for individual CVE lookups (`-c`, `-mc`) to keep the output concise. It can still be displayed using the `-f` fields option.
+- ⚙️ **Internal Stability**: Various internal improvements for flag consistency, error handling, and CLI argument processing.
 
 ## 📦 Installation
 
@@ -90,7 +96,7 @@ If you prefer to manually install the tool from the source, you can clone the re
 
 ### 🔍 Search Filters
 - `-k, --is-kev` - Show only Known Exploited Vulnerabilities
-- `-s, --severity TEXT` - Filter by severity (critical,high,medium,low)
+- `-s, --severity TEXT` - Filter by severity (critical,high,medium,low,none)
 - `-sd, --start-date TEXT` - Start date for CVE search (YYYY-MM-DD)
 - `-ed, --end-date TEXT` - End date for CVE search (YYYY-MM-DD)
 - `--cpe23 TEXT` - Search CVEs by CPE 2.3 string
@@ -104,10 +110,10 @@ If you prefer to manually install the tool from the source, you can clone the re
 - `-fl, --fields-list` - List all available fields
 
 ### 📊 Pagination Options
-- `--skip-cves INTEGER` - Number of CVEs to skip
-- `--limit-cves INTEGER` - Maximum number of CVEs to return
-- `--skip-cpe INTEGER` - Number of CPEs to skip
-- `--limit-cpe INTEGER` - Maximum number of CPEs to return
+- `-scv, --skip-cves INTEGER` - Number of CVEs to skip
+- `-lcv, --limit-cves INTEGER` - Maximum number of CVEs to return
+- `-scp, --skip-cpe INTEGER` - Number of CPEs to skip
+- `-lcp, --limit-cpe INTEGER` - Maximum number of CPEs to return
 
 ## 📚 Examples
 
@@ -223,5 +229,5 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 [![Discord](https://img.shields.io/badge/Discord-%235865F2.svg?style=for-the-badge&logo=discord&logoColor=white)](https://discord.com/users/n3th4ck3rx) 
 
 ---
-Made with ❤️ by Neo
+Made with ❤️ by fahad
 

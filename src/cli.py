@@ -6,8 +6,12 @@ from src.utils import (
     validate_date, sort_by_epss_score
 )
 from src.__version__ import __version__
+from src.constants import PACKAGE_NAME, DEFAULT_LIMIT
 import subprocess
 import sys
+
+# Context settings for Click command
+CONTEXT_SETTINGS = dict(auto_envvar_prefix='CVE_QUERY')
 
 def validate_mutually_exclusive(ctx, param, value):
     """Validate mutually exclusive parameters."""
@@ -55,7 +59,9 @@ def process_multiple_cves(cve_list: str, fields: Optional[str], jsonl: Optional[
             else:
                 results.append(data)
                 if not jsonl:
-                    fields_list = fields.split(",") if fields else data.keys()
+                    # Default fields to display if not specified, excluding 'cpes'
+                    default_fields = [k for k in data.keys() if k != 'cpes']
+                    fields_list = fields.split(",") if fields else default_fields
                     colorize_output(data, fields_list)
                     click.echo("=" * 80)
 
@@ -97,7 +103,7 @@ def process_cve_search(
     end_date: Optional[str],
     sort_by_epss: bool,
     skip: int,
-    limit: int,
+    limit: Optional[int],
     fields: Optional[str],
     json_file: Optional[str],
     only_cve_ids: bool,
@@ -116,6 +122,16 @@ def process_cve_search(
     else:
         severity_levels = None
     
+    # Determine API limit: use default if client-side filtering is active,
+    # otherwise use user's limit or default if not specified by user.
+    api_limit_to_pass = DEFAULT_LIMIT
+    user_specified_limit = limit
+
+    if not severity_levels and user_specified_limit is not None:
+        api_limit_to_pass = user_specified_limit
+    # If user_specified_limit is None (no --limit-cves flag), api_limit_to_pass remains DEFAULT_LIMIT
+    # If severity filter is on, api_limit_to_pass remains DEFAULT_LIMIT to fetch enough for filtering.
+
     # Get CVE data
     data = get_cves_data(
         product=product_cve,
@@ -125,7 +141,7 @@ def process_cve_search(
         start_date=start_date,
         end_date=end_date,
         skip=skip,
-        limit=limit
+        limit=api_limit_to_pass
     )
     
     if "error" in data:
@@ -139,9 +155,15 @@ def process_cve_search(
             click.echo(f"No CVEs found matching severity levels: {severity}")
             return
 
+    # Apply user-specified limit *after* client-side filtering
+    # And before the count is determined if --count is used.
+    if user_specified_limit is not None and data.get("cves"):
+        data["cves"] = data["cves"][:user_specified_limit]
+        data["total"] = len(data["cves"]) # Update total to reflect the limit
+
     # Handle output
     if count:
-        click.echo(f"Total CVEs found: {data.get('total', 0)}")
+        click.echo(f"Total CVEs found: {data.get('total', 0)}") # Now this total is after limiting
         return
 
     if only_cve_ids:
@@ -176,7 +198,7 @@ def update_package():
     try:
         # Update the package
         result = subprocess.run(
-            ["pipx", "upgrade", "cvequery"],
+            ["pipx", "upgrade", PACKAGE_NAME],
             capture_output=True,
             text=True,
             check=True
@@ -188,117 +210,94 @@ def update_package():
         click.echo(f"Error updating package: {e.stderr}", err=True)
         return False
 
-@click.command()
-@click.version_option(version=__version__, prog_name="cvequery")  # Add version option
+@click.command(PACKAGE_NAME, context_settings=CONTEXT_SETTINGS)
+@click.version_option(version=__version__, prog_name=PACKAGE_NAME)
 @click.option('-c', '--cve', callback=validate_mutually_exclusive, help='Get details for a specific CVE ID')
 @click.option('-mc', '--multiple-cves', callback=validate_mutually_exclusive, help='Query multiple CVEs (comma-separated or file path)')
 @click.option('-pcve', '--product-cve', callback=validate_mutually_exclusive, help='Search CVEs by product name')
 @click.option('-k', '--is-kev', is_flag=True, help='Show only Known Exploited Vulnerabilities')
-@click.option('-s', '--severity', help='Filter by severity levels (comma-separated: critical,high,medium,low)')
+@click.option('-s', '--severity', help='Filter by severity levels (comma-separated: critical,high,medium,low,none)')
 @click.option('-sd', '--start-date', help='Start date for CVE search (YYYY-MM-DD)')
 @click.option('-ed', '--end-date', help='End date for CVE search (YYYY-MM-DD)')
 @click.option('--cpe23', callback=validate_mutually_exclusive, help='Search CVEs by CPE 2.3 string')
 @click.option('-pcpe', '--product-cpe', help='Search by product name (e.g., apache or nginx)')
 @click.option('-epss','--sort-by-epss', is_flag=True, help='Sort results by EPSS score')
 @click.option('-f', '--fields', help='Comma-separated list of fields to display')
-@click.option('-j', '--json', help='Save output to JSON file')
+@click.option('-j', '--json', "json_output_file", help='Save output to JSON file')
 @click.option('-oci', '--only-cve-ids', is_flag=True, help='Output only CVE IDs')
 @click.option('--count', is_flag=True, help='Show only the total count of results')
-@click.option('--skip-cves', type=int, help='Number of CVEs to skip')
-@click.option('--limit-cves', type=int, help='Maximum number of CVEs to return')
-@click.option('--skip-cpe', type=int, help='Number of CPEs to skip')
-@click.option('--limit-cpe', type=int, help='Maximum number of CPEs to return')
+@click.option('-scv', '--skip-cves', type=int, default=0, help='Number of CVEs to skip (default: 0)')
+@click.option('-lcv', '--limit-cves', type=int, help='Maximum number of CVEs to return')
+@click.option('-scp', '--skip-cpe', type=int, default=0, help='Number of CPEs to skip (default: 0)')
+@click.option('-lcp', '--limit-cpe', type=int, default=1000, help='Maximum number of CPEs to return (default: 1000)')
 @click.option('-up', '--update', is_flag=True, help='Update the script to the latest version')
-@click.option('-fl', '--fields-list', is_flag=True, help='List all available fields')
-def cli(**kwargs):
+@click.option('-fl', '--fields-list', is_flag=True, help='List all available fields', is_eager=True)
+@click.pass_context
+def cli(ctx, **kwargs):
     """CVE Query Tool - Search and analyze CVE data from Shodan's CVE database."""
     try:
-        # Handle utility options first
-        if kwargs.get('update'):
-            click.echo(f"Current version: {__version__}")  # Show current version before update
-            if update_package():
-                sys.exit(0)
-            else:
-                sys.exit(1)
-
         if kwargs.get('fields_list'):
-            fields = [
-                "id", "summary", "cvss", "cvss_v2", "cvss_v3", "epss",
-                "epss_score", "kev", "references", "published", "modified",
-                "cpes", "cwe"
-            ]
+            _fields_available = ["id", "summary", "cvss", "cvss_v2", "cvss_v3", "epss", "epss_score", "kev", "references", "published", "modified", "cpes", "cwe"]
             click.echo("Available fields:")
-            for field in fields:
-                click.echo(f"- {field}")
-            return
+            for f_item in _fields_available: click.echo(f"- {f_item}")
+            ctx.exit()
 
-        # Validate dates if provided
-        if kwargs.get('start_date') and not validate_date(kwargs['start_date']):
-            click.echo("Invalid start-date format. Use YYYY-MM-DD.", err=True)
-            sys.exit(1)
+        if kwargs.get('update'):
+            click.echo(f"Current version: {__version__} of {PACKAGE_NAME}")
+            if update_package(): ctx.exit(0)
         
-        if kwargs.get('end_date') and not validate_date(kwargs['end_date']):
-            click.echo("Invalid end-date format. Use YYYY-MM-DD.", err=True)
-            sys.exit(1)
+        if kwargs.get('start_date') and not validate_date(kwargs['start_date']): 
+            click.echo("Invalid start-date format. Use YYYY-MM-DD.", err=True); ctx.exit(1)
+        if kwargs.get('end_date') and not validate_date(kwargs['end_date']): 
+            click.echo("Invalid end-date format. Use YYYY-MM-DD.", err=True); ctx.exit(1)
 
-        # Handle CVE queries
         if kwargs.get('cve'):
             data = get_cve_data(kwargs['cve'])
             if data and "error" not in data:
-                fields_list = kwargs.get('fields', '').split(",") if kwargs.get('fields') else data.keys()
-                colorize_output(data, fields_list)
-                if kwargs.get('json'):
-                    save_to_json(data, kwargs['json'])
+                default_fields_list = [k for k in data.keys() if k != 'cpes']
+                fields_to_show = default_fields_list
+                if kwargs.get('fields'): fields_to_show = kwargs.get('fields').split(",")
+                colorize_output(data, fields_to_show)
+                if kwargs.get('json_output_file'): save_to_json(data, kwargs['json_output_file'])
             return
 
-        if kwargs.get('multiple_cves'):
-            process_multiple_cves(
-                kwargs['multiple_cves'],
-                kwargs.get('fields'),
-                kwargs.get('json'),
-                kwargs.get('only_cve_ids', False)
-            )
-            return
+        if kwargs.get('multiple_cves'): 
+            process_multiple_cves(kwargs['multiple_cves'], kwargs.get('fields'), kwargs.get('json_output_file'), kwargs.get('only_cve_ids', False)); return
+        
+        if kwargs.get('product_cpe'): 
+            process_cpe_lookup(kwargs['product_cpe'], kwargs.get('skip_cpe'), kwargs.get('limit_cpe'), kwargs.get('json_output_file'), kwargs.get('count', False)); return
 
-        if kwargs.get('product_cpe'):
-            process_cpe_lookup(
-                kwargs['product_cpe'],
-                kwargs.get('skip_cpe', 0),
-                kwargs.get('limit_cpe', 1000),
-                kwargs.get('json'),
-                kwargs.get('count', False)
-            )
-            return
+        # Check if any search-related flags are present to call process_cve_search
+        search_flags_present = any([
+            kwargs.get('product_cve'), kwargs.get('cpe23'), kwargs.get('is_kev'), 
+            kwargs.get('severity'), kwargs.get('start_date'), kwargs.get('end_date'), 
+            kwargs.get('sort_by_epss'), 
+            kwargs.get('skip_cves', 0) > 0, # Check if default is overridden
+            kwargs.get('limit_cves') is not None,
+            kwargs.get('count') # If only --count is passed, it implies a general search
+        ])
 
-        # Handle CVE search with filters
-        if any([kwargs.get(k) for k in ['product_cve', 'cpe23', 'is_kev', 'severity', 'start_date', 'end_date', 'sort_by_epss']]):
+        if search_flags_present:
             process_cve_search(
-                kwargs.get('product_cve'),
-                kwargs.get('cpe23'),
-                kwargs.get('is_kev', False),
-                kwargs.get('severity'),
-                kwargs.get('start_date'),
-                kwargs.get('end_date'),
-                kwargs.get('sort_by_epss', False),
-                kwargs.get('skip_cves'),
-                kwargs.get('limit_cves'),
-                kwargs.get('fields'),
-                kwargs.get('json'),
-                kwargs.get('only_cve_ids', False),
-                kwargs.get('count', False)
+                kwargs.get('product_cve'), kwargs.get('cpe23'), kwargs.get('is_kev', False), 
+                kwargs.get('severity'), kwargs.get('start_date'), kwargs.get('end_date'),
+                kwargs.get('sort_by_epss', False), kwargs.get('skip_cves'), kwargs.get('limit_cves'), 
+                kwargs.get('fields'), kwargs.get('json_output_file'),
+                kwargs.get('only_cve_ids', False), kwargs.get('count', False)
             )
             return
-
-        # If no options specified, show help
-        ctx = click.get_current_context()
-        click.echo(ctx.get_help())
+        
+        # If no relevant options specified (and not handled by eager options that exit), show help.
+        # This covers the case where the script is called with no arguments or only --version/--help.
+        if not (kwargs.get('fields_list') or kwargs.get('update') or kwargs.get('cve') or kwargs.get('multiple_cves') or kwargs.get('product_cpe') or search_flags_present):
+             click.echo(ctx.get_help())
 
     except Exception as e:
         click.echo(f"Error: {str(e)}", err=True)
-        sys.exit(1)
+        ctx.exit(1)
 
 def main():
-    cli(auto_envvar_prefix='CVE_QUERY')
+    cli()
 
 if __name__ == '__main__':
     main()

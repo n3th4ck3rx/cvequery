@@ -18,4 +18,5 @@ SEVERITY_MAP = {
     "none": (0.0, 0.0)
 }
 
-API_VERSION = "v1" 
+API_VERSION = "v1"
+PACKAGE_NAME = "cvequery" 
