@@ -16,10 +16,10 @@ A powerful command-line tool to search and analyze CVE (Common Vulnerabilities a
 - ⏳ Auto-update functionality
 - 🚀 **Robust API Interaction**:
     - **Rate Limiting**: Respects API limits (1-2 requests/second) to prevent abuse.
-    - **Caching**: API responses are cached for 24 hours in a local `cache/` directory to speed up repeated queries and reduce API calls. (The `cache/` directory is added to `.gitignore`).
+    - **Caching**: API responses are cached for 24 hours in a local `cache/` directory to speed up repeated queries and reduce API calls.
     - **Retries**: Implements a retry mechanism (3 retries with exponential backoff) for API calls on transient errors (e.g., 429, 5xx status codes).
 - 📄 **Improved Readability**: The `cpes` field is now hidden by default for individual CVE lookups (`-c`, `-mc`) to keep the output concise. It can still be displayed using the `-f` fields option.
-- ⚙️ **Internal Stability**: Various internal improvements for flag consistency, error handling, and CLI argument processing.
+
 
 ## 📦 Installation
 
