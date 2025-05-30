@@ -69,3 +69,7 @@ tests/
 
 # Cache files
 cache/
+
+# Ignore coverage files
+.coverage
+coverage
