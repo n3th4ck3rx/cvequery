@@ -71,5 +71,5 @@ tests/
 cache/
 
 # Ignore coverage files
-.coverage
-coverage
+.coverage*
+coverage*
