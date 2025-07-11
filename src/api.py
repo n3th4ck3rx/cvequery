@@ -5,6 +5,8 @@ from urllib3.util.retry import Retry
 import json
 import time
 import os
+from pathlib import Path
+import platform
 from src.constants import (
     BASE_URL,
     DEFAULT_TIMEOUT,
@@ -17,11 +19,23 @@ from src.constants import (
 from src.utils import create_cache_key
 
 # Cache configuration
-CACHE_DIR = "cache"
-CACHE_DURATION = 24 * 60 * 60  # 24 hours in seconds
+def get_cache_dir() -> Path:
+    """Returns the appropriate cache directory path based on the operating system."""
+    tool_name = "cvequery"
+    
+    if platform.system() in ["Linux", "Darwin"]:  # Unix-like systems (Linux, macOS)
+        cache_dir = Path.home() / ".cache" / tool_name
+    elif platform.system() == "Windows":
+        cache_dir = Path.home() / "AppData" / "Local" / tool_name
+    else:
+        raise NotImplementedError(f"Unsupported operating system: {platform.system()}")
+    
+    # Create the directory if it doesn't exist
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    return cache_dir
 
-if not os.path.exists(CACHE_DIR):
-    os.makedirs(CACHE_DIR)
+CACHE_DIR = get_cache_dir()
+CACHE_DURATION = 24 * 60 * 60  # 24 hours in seconds
 
 # Setup requests session with retries
 retry_strategy = Retry(
