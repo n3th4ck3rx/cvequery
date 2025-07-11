@@ -1,10 +1,14 @@
-# 🔍 cvequery - CVE Search and Analysis Tool
+<div align="center">
+<img src="https://i.ibb.co/SXKZ266V/cvequery.png" alt="cvequery">
+</div>
+
+# Cvequery - CVE Search and Analysis Tool
 
 [![Python Version](https://img.shields.io/badge/python-3.8%2B-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Version](https://img.shields.io/badge/version-1.0.4-orange.svg)](https://pypi.org/project/cvequery/)
 
-A powerful command-line tool to search and analyze CVE (Common Vulnerabilities and Exposures) data using Shodan's public CVE database API.
+A command line tool to search and analyze CVE (Common Vulnerabilities and Exposures) & CPE (Common Platform Enumeration) data using Shodan's public CVE database API.
 
 ## ✨ Features
 
