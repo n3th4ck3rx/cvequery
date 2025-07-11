@@ -2,7 +2,7 @@
 
 [![Python Version](https://img.shields.io/badge/python-3.8%2B-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-1.0.3-orange.svg)](https://test.pypi.org/project/cvequery/)
+[![Version](https://img.shields.io/badge/version-1.0.4-orange.svg)](https://pypi.org/project/cvequery/)
 
 A powerful command-line tool to search and analyze CVE (Common Vulnerabilities and Exposures) data using Shodan's public CVE database API.
 
