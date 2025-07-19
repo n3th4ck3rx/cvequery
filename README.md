@@ -1,6 +1,4 @@
-<div align="center">
-<img src="https://i.ibb.co/SXKZ266V/cvequery.png" alt="cvequery">
-</div>
+![cvequery](/static/cvequery.png)
 
 # Cvequery - CVE Search and Analysis Tool
 
