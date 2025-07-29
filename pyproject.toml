@@ -21,6 +21,16 @@ dependencies = [
     "typing-extensions>=3.7.4",
 ]
 
+[project.optional-dependencies]
+formats = [
+    "PyYAML>=6.0.0",  # For YAML export format
+    "stix2>=3.0.0",   # For STIX 2.1 threat intelligence format
+]
+all = [
+    "PyYAML>=6.0.0",
+    "stix2>=3.0.0",
+]
+
 [tool.setuptools]
 packages = ["src"]
 package-dir = {"src" = "src"}

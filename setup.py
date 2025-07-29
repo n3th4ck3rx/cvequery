@@ -50,6 +50,14 @@ setup(
     install_requires=INSTALL_REQUIRES,
     extras_require={
         'dev': DEV_REQUIRES,
+        'formats': [
+            'PyYAML>=6.0.0',  # For YAML export format
+            'stix2>=3.0.0',   # For STIX 2.1 threat intelligence format
+        ],
+        'all': [
+            'PyYAML>=6.0.0',
+            'stix2>=3.0.0',
+        ] + DEV_REQUIRES,
     },
     entry_points={
         "console_scripts": [
