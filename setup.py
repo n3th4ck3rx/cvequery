@@ -16,6 +16,7 @@ INSTALL_REQUIRES = [
     "requests",  # Let pip resolve the version
     "click",
     "colorama",
+    "rich>=13.0.0",  # For beautiful CLI output
     "urllib3",
     "certifi",
     "typing-extensions",
