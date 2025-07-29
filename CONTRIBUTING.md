@@ -8,7 +8,6 @@ That being said, **feedback and suggestions** are always welcome! If you have id
 
 [![X](https://img.shields.io/badge/X-%23000000.svg?style=for-the-badge&logo=X&logoColor=white)](https://x.com/n3th4ck3rx) 
 
-[![Discord](https://img.shields.io/badge/Discord-%235865F2.svg?style=for-the-badge&logo=discord&logoColor=white)](https://discord.com/users/n3th4ck3rx) 
 
 Please note that while I might not be able to immediately respond, I do my best to review messages when I can and will consider feedback for future updates to the tool.
 

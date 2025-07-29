@@ -66,6 +66,7 @@ Thumbs.db
 
 # Test folder
 tests/
+.tests/
 
 # Cache files
 cache/

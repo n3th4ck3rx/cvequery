@@ -1,237 +1,124 @@
-<div align="center">
-<img src="https://i.ibb.co/SXKZ266V/cvequery.png" alt="cvequery">
-</div>
-
-# Cvequery - CVE Search and Analysis Tool
+# CVEQuery
 
 [![Python Version](https://img.shields.io/badge/python-3.8%2B-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-1.0.4-orange.svg)](https://pypi.org/project/cvequery/)
+[![Version](https://img.shields.io/badge/version-1.0.5-orange.svg)](https://pypi.org/project/cvequery/)
 
-A command line tool to search and analyze CVE (Common Vulnerabilities and Exposures) & CPE (Common Platform Enumeration) data using Shodan's public CVE database API.
+Powerfull CVE research tool for security researchers and bug bounty hunters. Query Shodan's CVE database with advanced filtering and export capabilities.
 
-## ✨ Features
-
-- 🔍 Search CVEs by product name or CPE
-- 📊 Filter results by severity, date range, and KEV status
-- 📈 Sort results by EPSS score
-- 📥 Export results to JSON format
-- 🖌️ **Enhanced Colorized Output**: Improved color-coding for better readability in the terminal.
-- ⏳ Auto-update functionality
-- 🚀 **Robust API Interaction**:
-    - **Rate Limiting**: Respects API limits (1-2 requests/second) to prevent abuse.
-    - **Caching**: API responses are cached for 24 hours in a local `cache/` directory to speed up repeated queries and reduce API calls.
-    - **Retries**: Implements a retry mechanism (3 retries with exponential backoff) for API calls on transient errors (e.g., 429, 5xx status codes).
-- 📄 **Improved Readability**: The `cpes` field is now hidden by default for individual CVE lookups (`-c`, `-mc`) to keep the output concise. It can still be displayed using the `-f` fields option.
-
-
-## 📦 Installation
-
-### If you want to install the tool easily, I recommend using `pipx`:
+## Quick Start
 
 ```bash
+# Install
 pipx install cvequery
+
+# Single CVE lookup
+cvequery -c CVE-2021-44228
+
+# Product vulnerability search
+cvequery --product-cve nginx --severity critical
+
+# KEV (Known Exploited Vulnerabilities) only
+cvequery --is-kev --limit-cves 10
 ```
 
-### 2. Manual Installation (From Source)
+## Core Commands
 
-If you prefer to manually install the tool from the source, you can clone the repository and set up the environment locally.
-
-#### Steps to Install Manually:
-
-1. Clone the Repository:
-
-   First, clone the `cvequery` repository from GitHub to your local machine:
-   ```bash
-   git clone https://github.com/n3th4ck3rx/cvequery.git
-   cd cvequery
-   ```
-
-2. Set Up a Virtual Environment (Optional but recommended):
-
-   It's best practice to use a virtual environment to avoid conflicts with other Python packages.
-
-   ```bash
-   # Create a virtual environment (you can name it anything)
-   python3 -m venv venv
-
-   # Activate the virtual environment:
-   # On Windows:
-   venv\Scripts\activate
-   # On macOS/Linux:
-   source venv/bin/activate
-   ```
-
-3. Install Dependencies:
-
-   Now, install the required dependencies from the `requirements.txt` file:
-
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-4. Run the Tool:
-
-   After installing the dependencies, you can run the tool using the following command:
-
-   ```bash
-   python cvequery.py 
-   ```
-
-5. (Optional) Install as a Global Tool:
-
-   If you want to install the tool globally on your system for easier use, you can use:
-
-   ```bash
-   pip install .
-   ```
-
-   This will install the tool locally within your environment or globally depending on your Python setup.
-
-## 🛠️ Command Options
-
-### ⚙️ Basic Options
-- `-c, --cve TEXT` - Get details for a specific CVE ID
-- `-mc, --multiple-cves TEXT` - Query multiple CVEs (comma-separated or file path)
-- `-pcve, --product-cve TEXT` - Search CVEs by product name
-- `-pcpe, --product-cpe TEXT` - Search by product name for CPE lookup
-- `--version` - Show the current version
-- `-up, --update` - Update to the latest version
-
-### 🔍 Search Filters
-- `-k, --is-kev` - Show only Known Exploited Vulnerabilities
-- `-s, --severity TEXT` - Filter by severity (critical,high,medium,low,none)
-- `-sd, --start-date TEXT` - Start date for CVE search (YYYY-MM-DD)
-- `-ed, --end-date TEXT` - End date for CVE search (YYYY-MM-DD)
-- `--cpe23 TEXT` - Search CVEs by CPE 2.3 string
-- `-epss, --sort-by-epss` - Sort results by EPSS score
-
-### 📋 Output Options
-- `-f, --fields TEXT` - Comma-separated list of fields to display
-- `-j, --json TEXT` - Save output to JSON file
-- `-oci, --only-cve-ids` - Output only CVE IDs
-- `--count` - Show only the total count of results
-- `-fl, --fields-list` - List all available fields
-
-### 📊 Pagination Options
-- `-scv, --skip-cves INTEGER` - Number of CVEs to skip
-- `-lcv, --limit-cves INTEGER` - Maximum number of CVEs to return
-- `-scp, --skip-cpe INTEGER` - Number of CPEs to skip
-- `-lcp, --limit-cpe INTEGER` - Maximum number of CPEs to return
-
-## 📚 Examples
-
-### Basic CVE Lookup
+### CVE Lookup
 ```bash
-# Look up a specific CVE
-cvequery -c CVE-2019-5127
+# Single CVE
+cvequery -c CVE-2021-44228
 
-# Search for multiple CVEs
-cvequery -mc CVE-2019-5129,CVE-2019-5127
+# Multiple CVEs (parallel processing)
+cvequery -mc "CVE-2021-44228,CVE-2023-44487"
 
-# Load CVEs from a file
-cvequery -mc cve_list.txt
+# Detailed view (no truncation)
+cvequery -c CVE-2021-44228 -d
 ```
 
-### Product Search
+### Product Research
 ```bash
-# Search CVEs for a product
-cvequery -pcve apache
+# Find vulnerabilities in specific products
+cvequery --product-cve nginx
+cvequery --product-cve "windows_10" -lcv 10
 
-# Search with severity filter
-cvequery -pcve apache -s critical,high
-
-# Search with date range
-cvequery -pcve apache -sd 2023-01-01 -ed 2023-12-31
+# Filter by severity
+cvequery --product-cve django --severity critical,high
 ```
 
 ### Advanced Filtering
 ```bash
-# Search for Known Exploited Vulnerabilities
-cvequery -pcve windows -k
+# KEV vulnerabilities only
+cvequery --is-kev --limit-cves 20
 
-# Sort by EPSS score
-cvequery -pcve apache -epss
+# Date range filtering
+cvequery --product-cve log4j --start-date 2021-01-01 --end-date 2021-12-31
 
-# Show only specific fields
-cvequery -pcve nginx -f cve_id,summary,cvss_v3
+# Sort by exploitation probability
+cvequery --product-cve nginx --sort-by-epss
 ```
 
-### CPE Lookup
+## Output Formats
+
+### Display Options
 ```bash
-# Search CPEs for a product
-cvequery -pcpe apache
+# Compact format (one line per CVE)
+cvequery --product-cve apache --format compact
 
-# Use CPE 2.3 format
-cvequery --cpe23 cpe:2.3:a:libpng:libpng:0.8
+# Summary format (statistical analysis)
+cvequery --product-cve apache --format summary
+
+# Custom fields only
+cvequery -c CVE-2021-44228 --fields cve_id,cvss,epss,kev
+
+# Exclude specific fields
+cvequery -c CVE-2021-44228 --fields-exclude summary,references
 ```
 
-### Output Options
+### Export Formats
 ```bash
-# Save results to JSON
-cvequery -pcve apache -j output.json
+# JSON for automation
+cvequery --product-cve nginx --json results.json
 
-# Show only CVE IDs
-cvequery -pcve apache -oci
+# CSV for analysis
+cvequery --is-kev --csv kev_report.csv
 
-# Show total count of CPES
-cvequery -pcve apache --count
+# STIX for threat intelligence
+cvequery -c CVE-2021-44228 --stix intel.json
 ```
 
-## 🗂️ Version Management
+## Installation
 
-### Check Current Version
 ```bash
-cvequery --version
+# Recommended
+pipx install cvequery
+
+# Alternative
+pip install cvequery
 ```
 
-### Update to Latest Version
-```bash
-cvequery -up
-```
+## Key Features
 
-## 📋 Available Fields
+- **KEV Integration** - Focus on actively exploited vulnerabilities
+- **EPSS Scoring** - Exploitation probability assessment  
+- **Parallel Processing** - Fast multiple CVE lookups
+- **Rich Filtering** - Severity, date range, product-based
+- **Export Options** - JSON, CSV, YAML, XML, STIX 2.1
+- **Field Customization** - Show/hide specific data fields
 
-To see all available fields:
-```bash
-cvequery -fl
-```
+## Documentation
 
-Available fields include:
-- id
-- summary
-- cvss
-- cvss_v2
-- cvss_v3
-- epss
-- epss_score
-- kev
-- references
-- published
-- modified
-- cpes
-- cwe
-
-### **Upcoming Features**
-- **Autocomplete**: Command and flag autocompletion for faster workflows.
-- **Progress Tracking**: Real-time progress for batch CVE processing.
-- **Integration with Security Tools**: Compatibility with tools like Nmap and Nessus.
-- **Multiple Output Formats**: Output to Other formats like csv,html etc.
+- [Installation Guide](docs/installation.md)
+- [Usage Guide](docs/usage.md)
 
 ## **Contributing**
 
  Take a look at the [Contributing](CONTRIBUTING.md) Page.
 
-## ⚖️ License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
 ## 📬 Contact
 
 [![X](https://img.shields.io/badge/X-%23000000.svg?style=for-the-badge&logo=X&logoColor=white)](https://x.com/n3th4ck3rx) 
 
-[![Discord](https://img.shields.io/badge/Discord-%235865F2.svg?style=for-the-badge&logo=discord&logoColor=white)](https://discord.com/users/n3th4ck3rx) 
+## License
 
----
-Made with ❤️ by fahad
-
+MIT License
